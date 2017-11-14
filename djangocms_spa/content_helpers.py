@@ -8,6 +8,20 @@ from djangocms_spa.renderer_pool import renderer_pool
 from .utils import get_function_by_path
 
 
+def get_frontend_page_extender_data_for_cms_page(cms_page, request):
+    """
+    Returns extra context data from all extenders available for a CMS page.
+    """
+    extra_context = {}
+    for attr in dir(cms_page):
+        if attr.endswith('extension'):
+            extension_instance = getattr(cms_page, attr, None)
+            if extension_instance and hasattr(extension_instance, 'get_extra_data'):
+                extra_context.update(extension_instance.get_extra_data())
+
+    return extra_context
+
+
 def get_frontend_data_dict_for_cms_page(cms_page, cms_page_title, request, editable=False):
     """
     Returns the data dictionary of a CMS page that is used by the frontend.

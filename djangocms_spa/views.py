@@ -8,7 +8,7 @@ from django.views.generic.list import MultipleObjectMixin
 from rest_framework.views import APIView
 
 from .content_helpers import (get_frontend_data_dict_for_cms_page, get_frontend_data_dict_for_partials,
-                              get_partial_names_for_template)
+                              get_partial_names_for_template, get_frontend_page_extender_data_for_cms_page)
 from .decorators import cache_view
 
 
@@ -83,8 +83,12 @@ class SpaApiView(APIView):
     template_name = None
 
     def get(self, *args, **kwargs):
+        fetched_data = self.get_fetched_data()
+        extra_context = fetched_data.pop('data', {})  # move extra context data from cms structure to top level
+
         data = {
-            'data': self.get_fetched_data()
+            'cms': fetched_data,
+            'data': extra_context
         }
 
         partials = self.get_partials()
@@ -149,6 +153,11 @@ class SpaCmsPageDetailApiView(CachedSpaApiView):
         )
         if view_data:
             data.update(view_data)
+
+        data['data'] = get_frontend_page_extender_data_for_cms_page(
+            cms_page=self.cms_page,
+            request=self.request
+        )
 
         return data
 
